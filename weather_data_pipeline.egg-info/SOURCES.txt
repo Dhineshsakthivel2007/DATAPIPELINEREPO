@@ -1,0 +1,16 @@
+setup.py
+backend/main.py
+backend/pipeline.py
+backend/config/__init__.py
+backend/config/settings.py
+backend/ingestion/__init__.py
+backend/ingestion/fetch_weather.py
+backend/processing/__init__.py
+backend/processing/clean_transform.py
+backend/storage/__init__.py
+backend/storage/db.py
+backend/storage/insert_data.py
+weather_data_pipeline.egg-info/PKG-INFO
+weather_data_pipeline.egg-info/SOURCES.txt
+weather_data_pipeline.egg-info/dependency_links.txt
+weather_data_pipeline.egg-info/top_level.txt
