@@ -1,0 +1,20 @@
+CREATE TABLE weather_data(
+    id SERIAL primary key,
+    city text,
+    longitude float,
+    latitude float,
+    wind_speed float,
+    wind_deg float,
+    temprature float,
+    catagory text,
+    min_temprature float,
+    max_temprature float,
+    sea_level int,
+    ground_level int,
+    humidity int,
+    pressure int,
+    sunrise TIMESTAMP,
+    sunset TIMESTAMP,
+    description text,
+    collected_at TIMESTAMP
+);
