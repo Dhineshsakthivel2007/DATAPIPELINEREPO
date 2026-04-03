@@ -1,13 +1,11 @@
 from backend.processing.clean_transform import data_forming
 from backend.storage.insert_data import insert_weather
-from backend.ingestion.fetch_weather import fetch_data
 def run_pipeline(cities=None):
     if cities is None:
         cities=["chennai","ooty","dharmapuri"]
     results=[]
     for city in cities:
-        data=fetch_data(city)
-        df=data_forming(data)
+        df=data_forming(city)
         if df is not None:
             insert_weather(df)
             print(f"{city} data inserted successfully")

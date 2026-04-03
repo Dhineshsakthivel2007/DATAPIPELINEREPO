@@ -1,6 +1,7 @@
+from backend.ingestion.fetch_weather import fetch_data
 import datetime
 import pandas as pd
-def category(temp_c):
+def catagory(temp_c):
     if temp_c<15:
         return "cold"
     elif temp_c<=20:

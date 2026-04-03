@@ -1,5 +1,4 @@
 from backend.config.settings import WEATHER_MAP_KEY
-# from backend.processing.clean_transform import data_forming
 import requests
 def fetch_data(city):
     if not isinstance(city,str):
@@ -8,7 +7,7 @@ def fetch_data(city):
         url = f"https://api.openweathermap.org/data/2.5/weather?q={city}&appid={WEATHER_MAP_KEY}"
         response=requests.get(url)
         if response.status_code!=200:
-            print("Api_error:",response.text)
+            return ("Api_error:",response.text)
             return None
         else:
             return response.json()
