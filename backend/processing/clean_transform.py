@@ -22,8 +22,8 @@ def data_forming(data):
         sunset=data.get("sys",{}).get('sunset')
         df=pd.DataFrame([
             {
-        "city":data.get("name").upper() if data.get("name") is not None else None,
-        "country":data.get("sys",{}).get("country").upper() if data.get("sys",{}).get("country") else None,
+        "city":data.get("name").strip().lower() if data.get("name") is not None else None,
+        "country":data.get("sys",{}).get("country").strip().lower() if data.get("sys",{}).get("country") else None,
         "longitude":data.get("coord",{}).get("lon"),
         "latitude":data.get("coord",{}).get("lat"),
         "wind_speed":data.get("wind",{}).get("speed"),
