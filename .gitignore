@@ -1,3 +1,15 @@
+# Airflow
+airflow/logs/
+airflow/*.db
+airflow/scheduler/
+airflow/dag_processor_manager/
+
+# Python
+__pycache__/
+*.pyc
+
+# Env
 .env
-__pycache__
-.node_modules
+
+# OS
+.DS_Store
