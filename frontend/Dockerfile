@@ -1,6 +1,6 @@
 FROM nginx:alpine
-COPY index.html /usr/share/nginx/html/
-COPY style.css /usr/share/nginx/html/
-COPY weather.js /usr/share/nginx/html/
+COPY frontend/index.html /usr/share/nginx/html/
+COPY frontend/style.css /usr/share/nginx/html/
+COPY frontend/weather.js /usr/share/nginx/html/
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

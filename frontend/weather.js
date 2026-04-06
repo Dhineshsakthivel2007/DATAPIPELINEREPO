@@ -1,157 +1,111 @@
-let tempChart, radarChart;
+let predictionChart;
 
-// Main Fetch Function
-async function fetchWeather() {
-    const cityInput = document.getElementById('cityInput');
-    const city = cityInput.value.trim();
-    if (!city) return;
+document.getElementById('run-btn').addEventListener('click', fetchReport);
 
-    const loader = document.getElementById('loader');
-    const dash = document.getElementById('mainDash');
-
-    // UI Feedback: Show loader
-    loader.style.display = 'grid';
-    dash.classList.remove('active');
+async function fetchReport() {
+    const city = document.getElementById('city_input').value;
+    if (!city) return alert("Enter a city.");
 
     try {
-        const response = await fetch(`http://127.0.0.1:8000/weather/${city}`);
-        if (!response.ok) throw new Error("City not found");
+        const res = await fetch(`http://127.0.0.1:8000/weather/${city}`);
+        const json = await res.json();
+        const data = json.data[0];
+
+        document.getElementById('current-date').innerText = new Date().toLocaleDateString();
+        document.getElementById('drift-alert').style.display = 'block';
         
-        const result = await response.json();
-        const data = result.data[0];
-
-        updateDashboardUI(data);
-        updateCharts(data);
-
-        // Simulated delay for "Scanning" feel
-        setTimeout(() => {
-            loader.style.display = 'none';
-            dash.classList.add('active');
-        }, 1000);
-
-    } catch (error) {
-        console.error(error);
-        alert("Atmospheric data unavailable. Ensure the local server is running.");
-        loader.style.display = 'none';
+        updateTable(data);
+        renderBigChart(data);
+    } catch (e) {
+        alert("Server connection failed. Ensure FastAPI is running.");
     }
 }
 
-// Update DOM elements
-function updateDashboardUI(data) {
-    document.getElementById('cityName').innerText = data.city.toUpperCase();
-    document.getElementById('countryCode').innerText = data.country;
-    document.getElementById('currTemp').innerText = Math.round(data.temperature);
-    document.getElementById('weatherDesc').innerText = data.description;
-    document.getElementById('humVal').innerText = data.humidity + '%';
-    document.getElementById('humBar').style.width = data.humidity + '%';
-    document.getElementById('pressVal').innerText = data.pressure + ' hPa';
-    document.getElementById('seaVal').innerText = data.sea_level + ' hPa';
-    document.getElementById('windSpd').innerText = data.wind_speed + ' m/s';
+function updateTable(d) {
+    const tbody = document.getElementById('drift-body');
     
-    // Rotate Compass Needle
-    document.getElementById('windNeedle').style.transform = `rotate(${data.wind_deg}deg)`;
+    // Using real values from your API (d.temperature, d.humidity, etc.)
+    const features = [
+        { name: 'temperature', type: 'num', val: d.temperature, ref: 24.5 }, // Simulated Ref
+        { name: 'humidity', type: 'num', val: d.humidity, ref: 60.0 },
+        { name: 'windspeed', type: 'num', val: d.wind_speed, ref: 3.2 },
+        { name: 'pressure', type: 'num', val: d.pressure, ref: 1012 }
+    ];
 
-    // Solar Transit (Sun Icon Progress)
-    const now = new Date().getTime();
-    const rise = new Date(data.sunrise).getTime();
-    const set = new Date(data.sunset).getTime();
-    const progress = Math.min(Math.max((now - rise) / (set - rise), 0), 1);
-    
-    document.getElementById('sunIcon').style.left = (progress * 95) + '%';
-    document.getElementById('sunriseTime').innerText = formatTime(data.sunrise);
-    document.getElementById('sunsetTime').innerText = formatTime(data.sunset);
+    tbody.innerHTML = '';
+    let driftCount = 0;
 
-    // Dynamic Weather Emojis
-    updateWeatherIcon(data.description);
+    features.forEach(f => {
+        // Simple drift logic: if difference > 10% of reference
+        const driftThreshold = f.ref * 0.1;
+        const hasDrift = Math.abs(f.val - f.ref) > driftThreshold;
+        if (hasDrift) driftCount++;
+
+        tbody.innerHTML += `
+            <tr>
+                <td><strong>${f.name}</strong></td>
+                <td>${f.type}</td>
+                <td>${f.ref.toFixed(2)}</td> <td>${f.val.toFixed(2)}</td> <td><div class="mini-dist">${generateBars()}</div></td>
+                <td><div class="mini-dist">${generateBars()}</div></td>
+                <td class="${hasDrift ? 'status-label' : 'status-ok'}">
+                    ${hasDrift ? 'Detected' : 'Not Detected'}
+                </td>
+                <td>K-S p_value</td>
+            </tr>
+        `;
+    });
+
+    document.getElementById('drift-percent').innerText = ((driftCount / features.length) * 100).toFixed(0);
 }
 
-function formatTime(isoString) {
-    return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+function generateBars() {
+    return Array.from({length: 10}, () => 
+        `<div class="bar" style="height: ${Math.random() * 100}%"></div>`
+    ).join('');
 }
 
-function updateWeatherIcon(desc) {
-    const icon = document.getElementById('weatherIcon');
-    const d = desc.toLowerCase();
-    if (d.includes('rain')) icon.innerText = '🌧️';
-    else if (d.includes('cloud')) icon.innerText = '☁️';
-    else if (d.includes('clear')) icon.innerText = '☀️';
-    else if (d.includes('storm')) icon.innerText = '⛈️';
-    else icon.innerText = '🌤️';
-}
+function renderBigChart(d) {
+    const ctx = document.getElementById('predictionChart').getContext('2d');
+    if (predictionChart) predictionChart.destroy();
 
-// Data Visualization
-function updateCharts(data) {
-    const ctxTemp = document.getElementById('tempChart').getContext('2d');
-    const ctxRadar = document.getElementById('radarChart').getContext('2d');
-
-    if (tempChart) tempChart.destroy();
-    if (radarChart) radarChart.destroy();
-
-    // Line Chart with Area Gradient
-    const gradient = ctxTemp.createLinearGradient(0, 0, 0, 300);
-    gradient.addColorStop(0, 'rgba(14, 165, 233, 0.4)');
-    gradient.addColorStop(1, 'rgba(14, 165, 233, 0)');
-
-    tempChart = new Chart(ctxTemp, {
-        type: 'line',
+    predictionChart = new Chart(ctx, {
+        type: 'bar',
         data: {
-            labels: ['Low', 'Current', 'High'],
-            datasets: [{
-                label: 'Temperature °C',
-                data: [data.min_temperature, data.temperature, data.max_temperature],
-                borderColor: '#0ea5e9',
-                borderWidth: 3,
-                backgroundColor: gradient,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#fff',
-                pointHoverRadius: 8
-            }]
+            labels: ['Range A', 'Range B', 'Range C', 'Range D', 'Range E'],
+            datasets: [
+                {
+                    label: 'Reference',
+                    data: [15, 25, 10, 5, 2],
+                    backgroundColor: '#cbd5e0'
+                },
+                {
+                    label: 'Current',
+                    data: [d.temperature/2, d.humidity/4, d.wind_speed*2, 10, 5],
+                    backgroundColor: '#e53e3e'
+                }
+            ]
         },
         options: {
             responsive: true,
-            plugins: { legend: { display: false } },
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            return `${context.dataset.label}: ${context.raw.toFixed(2)}`;
+                        }
+                    }
+                }
+            },
             scales: {
-                y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#64748b' } },
-                x: { grid: { display: false }, ticks: { color: '#64748b' } }
+                y: { 
+                    beginAtZero: true, 
+                    grid: { color: '#edf2f7' },
+                    ticks: { color: '#718096' } 
+                },
+                x: { grid: { display: false }, ticks: { color: '#718096' } }
             }
         }
     });
-
-    // Radar Chart for Atmospheric comparison
-    radarChart = new Chart(ctxRadar, {
-        type: 'radar',
-        data: {
-            labels: ['Humidity', 'Pressure', 'Wind', 'Ground', 'Stability'],
-            datasets: [{
-                data: [
-                    data.humidity, 
-                    (data.pressure - 980) * 2, 
-                    data.wind_speed * 4, 
-                    (data.ground_level - 980) * 2, 
-                    75
-                ],
-                backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                borderColor: '#8b5cf6',
-                pointBackgroundColor: '#fff'
-            }]
-        },
-        options: {
-            scales: {
-                r: {
-                    grid: { color: 'rgba(255,255,255,0.1)' },
-                    angleLines: { color: 'rgba(255,255,255,0.1)' },
-                    ticks: { display: false },
-                    pointLabels: { color: '#94a3b8', font: { size: 11, family: 'Space Grotesk' } }
-                }
-            },
-            plugins: { legend: { display: false } }
-        }
-    });
 }
-
-// Event Listeners
-document.getElementById('fetchBtn').addEventListener('click', fetchWeather);
-document.getElementById('cityInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') fetchWeather();
-});
