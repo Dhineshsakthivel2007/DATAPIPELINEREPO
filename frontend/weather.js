@@ -1,111 +1,80 @@
-let predictionChart;
+let chartRegistry = {};
 
-document.getElementById('run-btn').addEventListener('click', fetchReport);
+document.getElementById('run-btn').addEventListener('click', analyzeDB);
 
-async function fetchReport() {
+async function analyzeDB() {
     const city = document.getElementById('city_input').value;
-    if (!city) return alert("Enter a city.");
+    if (!city) return alert("Please enter a query name.");
 
     try {
-        const res = await fetch(`http://127.0.0.1:8000/weather/${city}`);
+        const res = await fetch(`http://localhost:8000/weather/${city}`);
         const json = await res.json();
-        const data = json.data[0];
+        const dataset = json.data; 
 
-        document.getElementById('current-date').innerText = new Date().toLocaleDateString();
-        document.getElementById('drift-alert').style.display = 'block';
-        
-        updateTable(data);
-        renderBigChart(data);
+        updateDashboard(dataset, city);
+        initAllCharts(dataset);
     } catch (e) {
-        alert("Server connection failed. Ensure FastAPI is running.");
+        alert("API Error: Check your FastAPI server.");
     }
 }
 
-function updateTable(d) {
-    const tbody = document.getElementById('drift-body');
-    
-    // Using real values from your API (d.temperature, d.humidity, etc.)
-    const features = [
-        { name: 'temperature', type: 'num', val: d.temperature, ref: 24.5 }, // Simulated Ref
-        { name: 'humidity', type: 'num', val: d.humidity, ref: 60.0 },
-        { name: 'windspeed', type: 'num', val: d.wind_speed, ref: 3.2 },
-        { name: 'pressure', type: 'num', val: d.pressure, ref: 1012 }
-    ];
+function updateDashboard(list, city) {
+    const latest = list[0];
+    document.getElementById('target-view').innerText = city.toUpperCase();
+    document.getElementById('record-count').innerText = list.length;
+    document.getElementById('kpi-temp').innerText = latest.temperature.toFixed(1) + "°C";
+    document.getElementById('kpi-hum').innerText = latest.humidity + "%";
+    document.getElementById('kpi-vis').innerText = "10km";
+}
 
-    tbody.innerHTML = '';
-    let driftCount = 0;
+function initAllCharts(list) {
+    // Destroy previous instances to prevent overlap
+    Object.values(chartRegistry).forEach(c => c.destroy());
 
-    features.forEach(f => {
-        // Simple drift logic: if difference > 10% of reference
-        const driftThreshold = f.ref * 0.1;
-        const hasDrift = Math.abs(f.val - f.ref) > driftThreshold;
-        if (hasDrift) driftCount++;
+    const labels = list.slice(0, 7).map((_, i) => `Point ${i + 1}`);
 
-        tbody.innerHTML += `
-            <tr>
-                <td><strong>${f.name}</strong></td>
-                <td>${f.type}</td>
-                <td>${f.ref.toFixed(2)}</td> <td>${f.val.toFixed(2)}</td> <td><div class="mini-dist">${generateBars()}</div></td>
-                <td><div class="mini-dist">${generateBars()}</div></td>
-                <td class="${hasDrift ? 'status-label' : 'status-ok'}">
-                    ${hasDrift ? 'Detected' : 'Not Detected'}
-                </td>
-                <td>K-S p_value</td>
-            </tr>
-        `;
+    // 1. Line Chart
+    chartRegistry.line = new Chart(document.getElementById('lineChart'), {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{ label: 'Temp', data: list.map(d => d.temperature), borderColor: '#4361ee', tension: 0.4, fill: true, backgroundColor: 'rgba(67, 97, 238, 0.1)' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
     });
 
-    document.getElementById('drift-percent').innerText = ((driftCount / features.length) * 100).toFixed(0);
-}
+    // 2. Ring Chart (Doughnut)
+    chartRegistry.ring = new Chart(document.getElementById('ringChart'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Oxygen', 'Nitrogen', 'Humidity'],
+            datasets: [{ data: [21, 78, list[0].humidity], backgroundColor: ['#4361ee', '#4cc9f0', '#f72585'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
+    });
 
-function generateBars() {
-    return Array.from({length: 10}, () => 
-        `<div class="bar" style="height: ${Math.random() * 100}%"></div>`
-    ).join('');
-}
-
-function renderBigChart(d) {
-    const ctx = document.getElementById('predictionChart').getContext('2d');
-    if (predictionChart) predictionChart.destroy();
-
-    predictionChart = new Chart(ctx, {
+    // 3. Bar Chart
+    chartRegistry.bar = new Chart(document.getElementById('barChart'), {
         type: 'bar',
         data: {
-            labels: ['Range A', 'Range B', 'Range C', 'Range D', 'Range E'],
-            datasets: [
-                {
-                    label: 'Reference',
-                    data: [15, 25, 10, 5, 2],
-                    backgroundColor: '#cbd5e0'
-                },
-                {
-                    label: 'Current',
-                    data: [d.temperature/2, d.humidity/4, d.wind_speed*2, 10, 5],
-                    backgroundColor: '#e53e3e'
-                }
-            ]
+            labels: labels,
+            datasets: [{ label: 'Pressure', data: list.map(d => (d.pressure-1000)), backgroundColor: '#4cc9f0' }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                tooltip: {
-                    enabled: true,
-                    callbacks: {
-                        label: function(context) {
-                            return `${context.dataset.label}: ${context.raw.toFixed(2)}`;
-                        }
-                    }
-                }
-            },
-            scales: {
-                y: { 
-                    beginAtZero: true, 
-                    grid: { color: '#edf2f7' },
-                    ticks: { color: '#718096' } 
-                },
-                x: { grid: { display: false }, ticks: { color: '#718096' } }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    // 4. Radar Chart
+    chartRegistry.radar = new Chart(document.getElementById('radarChart'), {
+        type: 'radar',
+        data: {
+            labels: ['Humidity', 'Visibility', 'Wind', 'Temp', 'Pressure'],
+            datasets: [{
+                label: 'Health Check',
+                data: [list[0].humidity, 80, list[0].wind_speed * 10, list[0].temperature * 2, 70],
+                backgroundColor: 'rgba(67, 97, 238, 0.2)',
+                borderColor: '#4361ee'
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
     });
 }

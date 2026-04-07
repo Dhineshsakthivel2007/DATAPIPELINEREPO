@@ -2,70 +2,72 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATMOS | ML Drift Report</title>
+    <title>ATMOS | Analytics Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-    <div class="sidebar">
-        <div class="logo">💠 ATMOS<span>AI</span></div>
-        <div class="nav-section">
-            <label class="input-label">PROJECT SELECT</label>
-            <select id="project-type">
-                <option>weather-forecasting</option>
-                <option>climate-drift-analysis</option>
-            </select>
-        </div>
-        <div class="search-container">
-            <label class="input-label">TARGET CITY</label>
-            <input type="text" id="city_input" placeholder="e.g. Mumbai">
-            <button id="run-btn">GENERATE REPORT</button>
-        </div>
-        <div class="drift-summary">
-            <div class="summary-title">DRIFT DETECTED</div>
-            <div class="summary-val"><span id="drift-percent">0</span>%</div>
-            <div class="summary-desc">of features have drifted.</div>
-        </div>
-    </div>
+    <div class="app-container">
+        <nav class="sidebar">
+            <div class="brand">💠 ATMOS<span>AI</span></div>
+            <ul class="nav-links">
+                <li class="active">Dashboard</li>
+                <li>Statistics</li>
+                <li>ML Analysis</li>
+                <li>Reports</li>
+            </ul>
+            <div class="search-section">
+                <input type="text" id="city_input" placeholder="Query location...">
+                <button id="run-btn">Analyze Data</button>
+            </div>
+        </nav>
 
-    <main class="main-content">
-        <header class="report-header">
-            <h1>Report: Data drift</h1>
-            <p>Analysis Period: <span id="current-date">--</span></p>
-        </header>
+        <main class="content">
+            <header class="content-header">
+                <h2>Analysis Overview: <span id="target-view">Global</span></h2>
+                <div class="user-meta">DB Records: <span id="record-count">0</span></div>
+            </header>
 
-        <section class="alert-box" id="drift-alert">
-            Dataset Drift is detected.
-        </section>
-
-        <div class="table-container">
-            <table class="drift-table">
-                <thead>
-                    <tr>
-                        <th>Feature</th>
-                        <th>Type</th>
-                        <th>Reference Dist.</th>
-                        <th>Current Dist.</th>
-                        <th>Drift Status</th>
-                        <th>Stat Test</th>
-                    </tr>
-                </thead>
-                <tbody id="drift-body">
-                    </tbody>
-            </table>
-        </div>
-
-        <div class="charts-section">
-            <div class="chart-card">
-                <h3>PREDICTION DRIFT (K-S TEST)</h3>
-                <div class="chart-wrapper">
-                    <canvas id="predictionChart"></canvas>
+            <div class="kpi-row">
+                <div class="kpi-card">
+                    <small>Temperature</small>
+                    <div class="val" id="kpi-temp">--</div>
+                </div>
+                <div class="kpi-card">
+                    <small>Humidity</small>
+                    <div class="val" id="kpi-hum">--</div>
+                </div>
+                <div class="kpi-card">
+                    <small>Visibility</small>
+                    <div class="val" id="kpi-vis">--</div>
+                </div>
+                <div class="kpi-card">
+                    <small>Confidence Score</small>
+                    <div class="val">98%</div>
                 </div>
             </div>
-        </div>
-    </main>
+
+            <div class="dashboard-grid">
+                <div class="card span-2">
+                    <h3>Temperature History (Linear Regression)</h3>
+                    <div class="chart-box"><canvas id="lineChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>Atmospheric Balance</h3>
+                    <div class="chart-box"><canvas id="ringChart"></canvas></div>
+                </div>
+                <div class="card">
+                    <h3>Feature Distribution</h3>
+                    <div class="chart-box"><canvas id="barChart"></canvas></div>
+                </div>
+                <div class="card span-2">
+                    <h3>Metadata Spider Analysis</h3>
+                    <div class="chart-box"><canvas id="radarChart"></canvas></div>
+                </div>
+            </div>
+        </main>
+    </div>
     <script src="weather.js" defer></script>
 </body>
 </html>

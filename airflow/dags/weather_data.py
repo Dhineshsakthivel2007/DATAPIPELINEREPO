@@ -11,7 +11,7 @@ default_args={
     'retry_delay':timedelta(minutes=2)
 }
 def fetching_task(ti):
-    cities = ['dharmapuri','salem','erode','chennai','kolkata','mumbai']
+    cities = ['dharmapuri','salem','erode','chennai','kolkata','mumbai','pune','coimbatore']
     data = {}
     for city in cities:
         result = fetch_data(city)

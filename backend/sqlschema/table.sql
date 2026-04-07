@@ -1,6 +1,7 @@
 CREATE TABLE weather_data(
     id SERIAL primary key,
     city text,
+    country TEXT,
     longitude float,
     latitude float,
     wind_speed float,
