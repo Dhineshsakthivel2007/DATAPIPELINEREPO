@@ -11,7 +11,23 @@ default_args={
     'retry_delay':timedelta(minutes=2)
 }
 def fetching_task(ti):
-    cities = ['dharmapuri','salem','erode','chennai','kolkata','mumbai','pune','coimbatore']
+    cities = [
+    # Tamil Nadu
+    "chennai", "coimbatore", "madurai", "tiruchirappalli", "salem",
+    "erode", "tirunelveli", "vellore", "tiruppur", "thoothukudi",
+    "dindigul", "karur", "namakkal", "krishnagiri", "hosur",
+    "cuddalore", "nagapattinam", "thanjavur", "kanchipuram", "tiruvannamalai",
+
+    # Kerala
+    "kochi", "thiruvananthapuram", "kozhikode", "thrissur", "kollam",
+
+    # Karnataka
+    "bangalore", "mysore", "mangalore", "hubli", "belgaum",
+
+    # Andhra & Telangana
+    "visakhapatnam", "vijayawada", "tirupati", "nellore", "kurnool",
+    "hyderabad", "warangal"
+]
     data = {}
     for city in cities:
         result = fetch_data(city)

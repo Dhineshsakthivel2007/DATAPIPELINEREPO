@@ -25,10 +25,10 @@ def home():
 #     return data
 @app.get("/weather/{city}")
 def get_weather_city(city:str):
-    city=city.lower()
+    city=city.strip().lower()
     with db_connection() as conn:
         with conn.cursor() as cursor:
-            query=("SELECT * FROM weather_data WHERE LOWER(TRIM(city))=%s")
+            query=("SELECT * FROM weather_data WHERE LOWER(TRIM(city)) = %s AND collected_at >= NOW() - INTERVAL '30 minutes' ORDER BY collected_at DESC LIMIT 1")
             cursor.execute(query,(city,))
             rows=cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
