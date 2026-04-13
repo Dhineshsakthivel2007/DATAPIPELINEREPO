@@ -5,3 +5,5 @@ pandas
 requests
 python-dotenv
 middleware
+joblib
+scikit-learn

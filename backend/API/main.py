@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from backend.ingestion.fetch_weather import fetch_data
 from backend.processing.clean_transform import data_forming
 from backend.storage.insert_data import insert_weather
+from MLmodel.model.predict import predict
 import psycopg2
 app=FastAPI()
 app.add_middleware(
@@ -43,4 +44,56 @@ def get_weather_city(city:str):
                     return {"source":"apifetch","data":df.to_dict(orient="records")}
                 else:
                     return "check the city name"
-                    
+import pandas as pd
+
+@app.get("/predict/{city}")
+def predict_city(city: str):
+    city = city.strip().lower()
+
+    with db_connection() as conn:
+        query = """
+        SELECT * FROM weather_data
+        WHERE LOWER(TRIM(city)) = %s
+        AND collected_at >= NOW() - INTERVAL '30 minutes'
+        ORDER BY collected_at DESC
+        LIMIT 1
+        """
+        df = pd.read_sql(query, conn, params=(city,))
+
+    source = "db"
+    if df.empty:
+        raw_data = fetch_data(city)
+
+        if raw_data is None:
+            return {"error": "City not found"}
+
+        df = data_forming(raw_data)
+        insert_weather(df)
+
+        source = "api"
+    df["collected_at"] = pd.to_datetime(df["collected_at"])
+    df["hour"] = df["collected_at"].dt.hour
+    df["day"] = df["collected_at"].dt.day
+    df["month"] = df["collected_at"].dt.month
+
+    features = [
+        "latitude",
+        "longitude",
+        "humidity",
+        "pressure",
+        "wind_speed",
+        "wind_deg",
+        "hour",
+        "day",
+        "month"
+    ]
+
+    input_data = df[features].iloc[0].to_dict()
+
+    result = predict(input_data)
+
+    return {
+        "city": city,
+        "predicted_temperature": result,
+        "source": source
+    }

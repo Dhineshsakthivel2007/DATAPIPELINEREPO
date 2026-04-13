@@ -1,15 +1,15 @@
 
 services:
-  grafana:
-    image: grafana/grafana:latest
-    container_name: weather_grafana
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-    environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin # Default login: admin / admin
-    networks:
-      - weather_net
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: weather_grafana
+  #   ports:
+  #     - "3000:3000"
+  #   restart: unless-stopped
+  #   environment:
+  #     - GF_SECURITY_ADMIN_PASSWORD=admin # Default login: admin / admin
+  #   networks:
+  #     - weather_net
   postgres:
     image: postgres:15
     container_name: weather_db
@@ -42,6 +42,8 @@ services:
         condition: service_healthy
     ports:
       - "8000:8000"
+    environment:
+      - PYTHONPATH=/app
     networks:
       - weather_net
 
