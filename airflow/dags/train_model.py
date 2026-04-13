@@ -22,9 +22,6 @@ def train_pipeline(**kwargs):
     # 3. Train model
     model = train_model(X, y)
 
-    # Example: if your train_model prints score,
-    # better modify it to RETURN score
-
     score = model.score(X, y)
 
     # 🔥 Push to XCom
