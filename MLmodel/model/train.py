@@ -10,5 +10,5 @@ def train_model(X,y):
     print(score)
     joblib.dump(model, "MLmodel/model/saved_models/model.pkl")
     return model
-X,y=feature_extraction()
-data3=train_model(X,y)
+# X,y=feature_extraction()
+# data3=train_model(X,y)

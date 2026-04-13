@@ -77,6 +77,7 @@ services:
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./backend:/opt/airflow/backend
+      - ./MLmodel:/opt/airflow/MLmodel 
     ports:
       - "8080:8080"
     networks:

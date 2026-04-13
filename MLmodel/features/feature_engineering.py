@@ -1,8 +1,8 @@
 from MLmodel.data.processed_data import processed_data
 import pandas as pd
 
-def feature_extraction():
-    data=processed_data()
+def feature_extraction(data):
+    # data=processed_data()
     df=data.copy()
     df=df.dropna()
     df["collected_at"]=pd.to_datetime(df["collected_at"])
