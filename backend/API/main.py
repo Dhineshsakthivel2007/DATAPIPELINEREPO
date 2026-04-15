@@ -29,7 +29,7 @@ def get_weather_city(city:str):
     city=city.strip().lower()
     with db_connection() as conn:
         with conn.cursor() as cursor:
-            query=("SELECT * FROM weather_data WHERE LOWER(TRIM(city)) = %s AND collected_at >= NOW() - INTERVAL '30 minutes' ORDER BY collected_at DESC LIMIT 1")
+            query=("SELECT * FROM weather_data WHERE LOWER(TRIM(city)) = %s AND collected_at >= NOW() - INTERVAL '6 hours' ORDER BY collected_at ASC")
             cursor.execute(query,(city,))
             rows=cursor.fetchall()
             columns = [desc[0] for desc in cursor.description]
@@ -43,24 +43,24 @@ def get_weather_city(city:str):
                     data=insert_weather(df)
                     return {"source":"apifetch","data":df.to_dict(orient="records")}
                 else:
-                    return "check the city name"
+                    return {"check the city name"}
 import pandas as pd
 
 @app.get("/predict/{city}")
-def predict_city(city: str):
+def predict_city(city: str, hours_ahead: int = 0):
     city = city.strip().lower()
 
     with db_connection() as conn:
         query = """
         SELECT * FROM weather_data
         WHERE LOWER(TRIM(city)) = %s
-        AND collected_at >= NOW() - INTERVAL '30 minutes'
         ORDER BY collected_at DESC
         LIMIT 1
         """
         df = pd.read_sql(query, conn, params=(city,))
 
     source = "db"
+
     if df.empty:
         raw_data = fetch_data(city)
 
@@ -71,10 +71,16 @@ def predict_city(city: str):
         insert_weather(df)
 
         source = "api"
+
+    # 🔥 FUTURE TIME LOGIC
     df["collected_at"] = pd.to_datetime(df["collected_at"])
-    df["hour"] = df["collected_at"].dt.hour
-    df["day"] = df["collected_at"].dt.day
-    df["month"] = df["collected_at"].dt.month
+    base_time = df["collected_at"].iloc[0]
+
+    future_time = base_time + pd.Timedelta(hours=hours_ahead)
+
+    df["hour"] = future_time.hour
+    df["day"] = future_time.day
+    df["month"] = future_time.month
 
     features = [
         "latitude",
@@ -94,6 +100,8 @@ def predict_city(city: str):
 
     return {
         "city": city,
+        "hours_ahead": hours_ahead,
         "predicted_temperature": result,
+        "prediction_time": str(future_time),
         "source": source
     }
